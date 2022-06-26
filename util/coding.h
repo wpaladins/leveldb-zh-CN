@@ -6,6 +6,10 @@
 // * Fixed-length numbers are encoded with least-significant byte first
 // * In addition we support variable length "varint" encoding
 // * Strings are encoded prefixed by their length in varint format
+// 端中性编码:
+// * 固定长度的数字 首先使用 最低有效字节 进行编码
+// * 此外, 支持变长的 "varint" 编码
+// * 字符串 以 他们的长度 为 前缀 进行编码
 
 #ifndef STORAGE_LEVELDB_UTIL_CODING_H_
 #define STORAGE_LEVELDB_UTIL_CODING_H_
@@ -20,6 +24,7 @@
 namespace leveldb {
 
 // Standard Put... routines append to a string
+// 标准 Put... 例程 (将值) 追加到一个字符串
 void PutFixed32(std::string* dst, uint32_t value);
 void PutFixed64(std::string* dst, uint64_t value);
 void PutVarint32(std::string* dst, uint32_t value);
@@ -28,6 +33,8 @@ void PutLengthPrefixedSlice(std::string* dst, const Slice& value);
 
 // Standard Get... routines parse a value from the beginning of a Slice
 // and advance the slice past the parsed value.
+// 标准 Get... 例程 从 Slice 的开头 解析一个 值
+// 并将 Slice 前进到 解析后的值 之后
 bool GetVarint32(Slice* input, uint32_t* value);
 bool GetVarint64(Slice* input, uint64_t* value);
 bool GetLengthPrefixedSlice(Slice* input, Slice* result);
@@ -36,15 +43,23 @@ bool GetLengthPrefixedSlice(Slice* input, Slice* result);
 // in *v and return a pointer just past the parsed value, or return
 // nullptr on error.  These routines only look at bytes in the range
 // [p..limit-1]
+// GetVarint 的基于 指针 的变体...
+// 它们 要么将值存入 *v 并 返回一个 解析后的值 之后 的指针
+//      要么出错返回 nullptr
+// 它们 仅查看 范围 [p..limit-1] 内 的字节
 const char* GetVarint32Ptr(const char* p, const char* limit, uint32_t* v);
 const char* GetVarint64Ptr(const char* p, const char* limit, uint64_t* v);
 
 // Returns the length of the varint32 or varint64 encoding of "v"
+// 返回 用 varint32 或 varint64 编码 "v" 时 结果的 长度
 int VarintLength(uint64_t v);
 
 // Lower-level versions of Put... that write directly into a character buffer
 // and return a pointer just past the last byte written.
 // REQUIRES: dst has enough space for the value being written
+// 低级别版本的 Put... 直接写到 字符缓存 里
+// 并返回一个 在 刚写入的最后一字节 之后的 指针
+// 要求: dst 必须有足够的空间来写入值
 char* EncodeVarint32(char* dst, uint32_t value);
 char* EncodeVarint64(char* dst, uint64_t value);
 
@@ -77,6 +92,7 @@ inline void EncodeFixed64(char* dst, uint64_t value) {
 
 // Lower-level versions of Get... that read directly from a character buffer
 // without any bounds checking.
+// 低级别版本的 Get... 在不做 边界检查 的情况下 直接从 字符缓存 里读
 
 inline uint32_t DecodeFixed32(const char* ptr) {
   const uint8_t* const buffer = reinterpret_cast<const uint8_t*>(ptr);
@@ -105,6 +121,7 @@ inline uint64_t DecodeFixed64(const char* ptr) {
 // Internal routine for use by fallback path of GetVarint32Ptr
 const char* GetVarint32PtrFallback(const char* p, const char* limit,
                                    uint32_t* value);
+// 使用 内联函数 先检查是否为 仅使用了一个字节的 varint32 (即 < 128 的情况)
 inline const char* GetVarint32Ptr(const char* p, const char* limit,
                                   uint32_t* value) {
   if (p < limit) {

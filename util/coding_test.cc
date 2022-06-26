@@ -12,6 +12,7 @@ namespace leveldb {
 
 TEST(Coding, Fixed32) {
   std::string s;
+  // 放入 [0..100000-1]
   for (uint32_t v = 0; v < 100000; v++) {
     PutFixed32(&s, v);
   }
@@ -26,10 +27,14 @@ TEST(Coding, Fixed32) {
 
 TEST(Coding, Fixed64) {
   std::string s;
+  // power 取 [0..63]
   for (int power = 0; power <= 63; power++) {
     uint64_t v = static_cast<uint64_t>(1) << power;
+    // 2 ^ power - 1
     PutFixed64(&s, v - 1);
+    // 2 ^ power
     PutFixed64(&s, v + 0);
+    // 2 ^ power + 1
     PutFixed64(&s, v + 1);
   }
 
@@ -52,6 +57,8 @@ TEST(Coding, Fixed64) {
 }
 
 // Test that encoding routines generate little-endian encodings
+// 测试 编码例程 是否生成 小端编码 (最小地址 the smallest address 存
+// 最低有效字节 the least-significant byte)
 TEST(Coding, EncodingOutput) {
   std::string dst;
   PutFixed32(&dst, 0x04030201);
@@ -76,7 +83,10 @@ TEST(Coding, EncodingOutput) {
 
 TEST(Coding, Varint32) {
   std::string s;
+  // i 取 [0..1023]
   for (uint32_t i = 0; i < (32 * 32); i++) {
+    // v 取 [0..31] 间 的数 向左移位 [0..32]
+    // 按照这样的顺序, 会产生一直变化的长度
     uint32_t v = (i / 32) << (i % 32);
     PutVarint32(&s, v);
   }
@@ -88,10 +98,12 @@ TEST(Coding, Varint32) {
     uint32_t actual;
     const char* start = p;
     p = GetVarint32Ptr(p, limit, &actual);
+    // 分别验证了 返回值, 期望值, 期望值的长度
     ASSERT_TRUE(p != nullptr);
     ASSERT_EQ(expected, actual);
     ASSERT_EQ(VarintLength(actual), p - start);
   }
+  // 验证了 p 的最终值
   ASSERT_EQ(p, s.data() + s.size());
 }
 
@@ -101,6 +113,7 @@ TEST(Coding, Varint64) {
   // Some special values
   values.push_back(0);
   values.push_back(100);
+  // 最大 及 次大的 无符号 64 位整型
   values.push_back(~static_cast<uint64_t>(0));
   values.push_back(~static_cast<uint64_t>(0) - 1);
   for (uint32_t k = 0; k < 64; k++) {
@@ -130,18 +143,28 @@ TEST(Coding, Varint64) {
   ASSERT_EQ(p, limit);
 }
 
+// 测试 varint32 的 溢出
 TEST(Coding, Varint32Overflow) {
   uint32_t result;
+  // \x 用于输入 16 进制数
+  // 这里 8 的 首位 为 1
+  // 连着 五个 首位 为 1 的字节, 是不可能出现在 varint32 中的
+  // 最多 四个 首位 为 1 的字节, 即 7 * 4 = 28 (28 + 7 > 32)
   std::string input("\x81\x82\x83\x84\x85\x11");
   ASSERT_TRUE(GetVarint32Ptr(input.data(), input.data() + input.size(),
                              &result) == nullptr);
 }
 
+// 测试 varint32 的 截断
 TEST(Coding, Varint32Truncation) {
   uint32_t large_value = (1u << 31) + 100;
   std::string s;
   PutVarint32(&s, large_value);
   uint32_t result;
+  // 此时有 s.size() == 5
+  // len 取 [0..3]
+  // 测了给 GetVarint32Ptr 分别输入 前 0 个, 1 个, 2 个, 3 个 字节时, 结果为 nullptr
+  // len == s.size() - 1 时, 即输入 前 4 个 字节时, 结果也为 nullptr
   for (size_t len = 0; len < s.size() - 1; len++) {
     ASSERT_TRUE(GetVarint32Ptr(s.data(), s.data() + len, &result) == nullptr);
   }
