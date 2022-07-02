@@ -17,6 +17,9 @@ class Slice;
 // used as keys in an sstable or a database.  A Comparator implementation
 // must be thread-safe since leveldb may invoke its methods concurrently
 // from multiple threads.
+// Comparator 对象提供 跨 slices 的 总顺序, 这些 slices 用作 sstable 或 数据库
+// 中的 键. Comparator 实现必须是 线程安全的, 因为 leveldb 可能从多个线程 并发
+// 调用它的方法
 class LEVELDB_EXPORT Comparator {
  public:
   virtual ~Comparator();
@@ -25,6 +28,10 @@ class LEVELDB_EXPORT Comparator {
   //   < 0 iff "a" < "b",
   //   == 0 iff "a" == "b",
   //   > 0 iff "a" > "b"
+  // 三路比较, 返回值:
+  //   < 0 当且仅当 "a" < "b",
+  //   == 0 当且仅当 "a" == "b",
+  //   > 0 当且仅当 "a" > "b"
   virtual int Compare(const Slice& a, const Slice& b) const = 0;
 
   // The name of the comparator.  Used to check for comparator
@@ -37,26 +44,40 @@ class LEVELDB_EXPORT Comparator {
   //
   // Names starting with "leveldb." are reserved and should not be used
   // by any clients of this package.
+  // 比较器的名称
+  // 用于检查比较器不匹配 [即, (检查是否存在) 使用 不同的比较器 访问使用
+  // 一个比较器 创建的 DB (的情况)]
+  //
+  // 每当 比较器实现的改变 会 导致 任意两个键 的相对顺序发生变化时,
+  // 这个包的客户端就应该切换到一个新名称
+  //
+  // (leveldb) 保留 "leveldb." 开头的名称, 不应被 此包的任何客户端 使用
   virtual const char* Name() const = 0;
 
   // Advanced functions: these are used to reduce the space requirements
   // for internal data structures like index blocks.
+  // 高级函数：用于减少 内部数据结构 (如索引块) 的空间需求
 
   // If *start < limit, changes *start to a short string in [start,limit).
   // Simple comparator implementations may return with *start unchanged,
   // i.e., an implementation of this method that does nothing is correct.
+  // 如果 *start < limit, 则将 *start 更改为 [start,limit) 中的 短字符串
+  // 具体实现可以什么都不做
   virtual void FindShortestSeparator(std::string* start,
                                      const Slice& limit) const = 0;
 
   // Changes *key to a short string >= *key.
   // Simple comparator implementations may return with *key unchanged,
   // i.e., an implementation of this method that does nothing is correct.
+  // 将 *key 更改为 >= *key 的 短字符串
+  // 具体实现可以什么都不做
   virtual void FindShortSuccessor(std::string* key) const = 0;
 };
 
 // Return a builtin comparator that uses lexicographic byte-wise
 // ordering.  The result remains the property of this module and
 // must not be deleted.
+// 返回一个使用 字典序 的 内置比较器; 结果仍然是该模块的属性, 不得删除
 LEVELDB_EXPORT const Comparator* BytewiseComparator();
 
 }  // namespace leveldb

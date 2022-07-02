@@ -20,6 +20,7 @@ struct DoNotDestruct {
   ~DoNotDestruct() { std::abort(); }
 
   // Used to check constructor argument forwarding.
+  // 用于检查 构造器 的 参数转发
   uint32_t a;
   uint64_t b;
 };
@@ -29,12 +30,14 @@ constexpr const uint64_t kGoldenB = 0xaabbccddeeffaabb;
 
 }  // namespace
 
+// 栈实例
 TEST(NoDestructorTest, StackInstance) {
   NoDestructor<DoNotDestruct> instance(kGoldenA, kGoldenB);
   ASSERT_EQ(kGoldenA, instance.get()->a);
   ASSERT_EQ(kGoldenB, instance.get()->b);
 }
 
+// 静态实例
 TEST(NoDestructorTest, StaticInstance) {
   static NoDestructor<DoNotDestruct> instance(kGoldenA, kGoldenB);
   ASSERT_EQ(kGoldenA, instance.get()->a);
