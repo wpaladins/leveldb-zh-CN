@@ -148,20 +148,27 @@ struct SkipList<Key, Comparator>::Node {
 
   // Accessors/mutators for links.  Wrapped in methods so we can
   // add the appropriate barriers as necessary.
+  // 链表的 访问器/修改器
+  // 包装在方法中, 以便我们可以根据需要添加适当的 (内存)屏障
   Node* Next(int n) {
     assert(n >= 0);
     // Use an 'acquire load' so that we observe a fully initialized
     // version of the returned Node.
+    // 使用 'acquire load' 以便我们观察到一个 完全初始化的 返回节点 版本
+    // [acquire: after is after]
     return next_[n].load(std::memory_order_acquire);
   }
   void SetNext(int n, Node* x) {
     assert(n >= 0);
     // Use a 'release store' so that anybody who reads through this
     // pointer observes a fully initialized version of the inserted node.
+    // 使用 'release store' 以便任何通过该指针读取的人都会观察到 插入节点的 完全初始化版本
+    // [release: before is before]
     next_[n].store(x, std::memory_order_release);
   }
 
   // No-barrier variants that can be safely used in a few locations.
+  // 可以在一些地方安全地使用的 No-barrier 变体
   Node* NoBarrier_Next(int n) {
     assert(n >= 0);
     return next_[n].load(std::memory_order_relaxed);
@@ -173,6 +180,7 @@ struct SkipList<Key, Comparator>::Node {
 
  private:
   // Array of length equal to the node height.  next_[0] is lowest level link.
+  // 注意, 这里具有原子性的是指针, 数组是的元素时原子变量, 而不是指针
   std::atomic<Node*> next_[1];
 };
 
@@ -239,6 +247,9 @@ inline void SkipList<Key, Comparator>::Iterator::SeekToLast() {
 template <typename Key, class Comparator>
 int SkipList<Key, Comparator>::RandomHeight() {
   // Increase height with probability 1 in kBranching
+  // 以概率 1 / kBranching 增加高度
+  // 
+  // 这就使第 n 层的节点数量大约为 n - 1 层节点数量的 1 / 4
   static const unsigned int kBranching = 4;
   int height = 1;
   while (height < kMaxHeight && rnd_.OneIn(kBranching)) {
@@ -263,7 +274,7 @@ SkipList<Key, Comparator>::FindGreaterOrEqual(const Key& key,
   int level = GetMaxHeight() - 1;
   while (true) {
     Node* next = x->Next(level);
-    if (KeyIsAfterNode(key, next)) {
+    if (KeyIsAfterNode(key, next)) { // next->key < key
       // Keep searching in this list
       x = next;
     } else {
@@ -360,6 +371,18 @@ void SkipList<Key, Comparator>::Insert(const Key& key) {
   for (int i = 0; i < height; i++) {
     // NoBarrier_SetNext() suffices since we will add a barrier when
     // we publish a pointer to "x" in prev[i].
+    // NoBarrier_SetNext() 就足够了,
+    // 因为我们将在 prev[i] 中设置指向 "x" 的指针时添加 屏障
+    //
+    // 后面的 release 保证了前面的 relaxed 在它之前完成
+    // 后面的必须为 release, 因为一旦后面部分修改, 其他线程可能就会使用到这个修改
+    // 但是前面的却只需要在后面的修改完成之前完成即可
+    //
+    // 那为啥要在循环内 release, 而不是在 for 外呢?
+    // 应该是因为 prev 数组设置的顺序不能改变, 对 height 的迭代必须从 0 -> height
+    // 且必须在 低 level 设置完后才能设置 高 level
+    // 如果先在 高 level 中加入 x, 可能会出现其他线程并发查找时 x 低 level 的 _next 悬空的情况,
+    // 从而出错, 而先设置 低 level 就不会有问题
     x->NoBarrier_SetNext(i, prev[i]->NoBarrier_Next(i));
     prev[i]->SetNext(i, x);
   }

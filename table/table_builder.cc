@@ -56,6 +56,8 @@ struct TableBuilder::Rep {
   // blocks.
   //
   // Invariant: r->pending_index_entry is true only if data_block is empty.
+  //
+  // 不变性：r->pending_index_entry 仅当 data_block 为空时为真
   bool pending_index_entry;
   BlockHandle pending_handle;  // Handle to add to index block
 
@@ -138,6 +140,7 @@ void TableBuilder::Flush() {
   }
 }
 
+// 功能: 对 block 中的数据进行格式化, 包括可能的压缩
 void TableBuilder::WriteBlock(BlockBuilder* block, BlockHandle* handle) {
   // File format contains a sequence of blocks where each block has:
   //    block_data: uint8[n]
@@ -161,6 +164,7 @@ void TableBuilder::WriteBlock(BlockBuilder* block, BlockHandle* handle) {
           compressed->size() < raw.size() - (raw.size() / 8u)) {
         block_contents = *compressed;
       } else {
+        // 如果是因为压缩率小于 12.5% 而导致的不压缩, 难道这里不会出现 compressed 的内存泄漏吗?
         // Snappy not supported, or compressed less than 12.5%, so just
         // store uncompressed form
         block_contents = raw;

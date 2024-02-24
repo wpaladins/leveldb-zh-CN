@@ -130,7 +130,7 @@ class HandleTable {
     LRUHandle** ptr = FindPointer(h->key(), h->hash);
     LRUHandle* old = *ptr;
     h->next_hash = (old == nullptr ? nullptr : old->next_hash);
-    // 以下赋值, 可能是覆盖了 old 在 链表 中的位置(前一项的 next_hash),
+    // 以下赋值, 可能是覆盖了 old 在 链表 中的位置(前一项的 next_hash, 即原哈希表中已经存在 h->key(), h->hash 对应的节点),
     // 也可能是在 链表尾部 新增了项
     *ptr = h;
     if (old == nullptr) {

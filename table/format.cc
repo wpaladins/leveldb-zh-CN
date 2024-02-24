@@ -105,6 +105,11 @@ Status ReadBlock(RandomAccessFile* file, const ReadOptions& options,
         // File implementation gave us pointer to some other data.
         // Use it directly under the assumption that it will be live
         // while the file is open.
+        //
+        // 文件实现为我们提供了指向其他一些数据的指针.
+        // 直接使用它, 基于文件打开时它将是活着的这个假设.
+        //
+        // 读文件返回的数据可能是指向其他位置的指针? 这与 file->Read() 方法的备注有冲突
         delete[] buf;
         result->data = Slice(data, n);
         result->heap_allocated = false;

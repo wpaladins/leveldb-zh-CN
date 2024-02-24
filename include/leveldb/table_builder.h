@@ -49,6 +49,10 @@ class LEVELDB_EXPORT TableBuilder {
   // Add key,value to the table being constructed.
   // REQUIRES: key is after any previously added key according to comparator.
   // REQUIRES: Finish(), Abandon() have not been called
+  //
+  // 向正在构造的 table 中添加 key,value
+  // 要求: key 在任何先前加入的 key 之后 (依据 comparator)
+  // 要求: Finish(), Abandon() 还没有被调用
   void Add(const Slice& key, const Slice& value);
 
   // Advanced operation: flush any buffered key/value pairs to file.
@@ -63,6 +67,10 @@ class LEVELDB_EXPORT TableBuilder {
   // Finish building the table.  Stops using the file passed to the
   // constructor after this function returns.
   // REQUIRES: Finish(), Abandon() have not been called
+  //
+  // 完成 table 的构建.
+  // 此函数返回后, 停止使用传递给构造函数的文件.
+  // 要求: Finish(), Abandon() 还没有被调用
   Status Finish();
 
   // Indicate that the contents of this builder should be abandoned.  Stops

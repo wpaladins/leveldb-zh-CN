@@ -150,6 +150,8 @@ static void ReleaseBlock(void* arg, void* h) {
 
 // Convert an index iterator value (i.e., an encoded BlockHandle)
 // into an iterator over the contents of the corresponding block.
+//
+// 将索引迭代器值（即编码的 BlockHandle）转换为对应块内容的迭代器
 Iterator* Table::BlockReader(void* arg, const ReadOptions& options,
                              const Slice& index_value) {
   Table* table = reinterpret_cast<Table*>(arg);

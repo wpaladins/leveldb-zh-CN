@@ -172,6 +172,9 @@ class Block::Iter : public Iterator {
       // If we're already scanning, use the current position as a starting
       // point. This is beneficial if the key we're seeking to is ahead of the
       // current position.
+      //
+      // 如果我们已经在扫描, 则使用当前位置作为起点.
+      // 如果我们要查找的键领先于当前位置, 这将很有用.
       current_key_compare = Compare(key_, target);
       if (current_key_compare < 0) {
         // key_ is smaller than target
@@ -210,7 +213,13 @@ class Block::Iter : public Iterator {
     // We might be able to use our current position within the restart block.
     // This is true if we determined the key we desire is in the current block
     // and is after than the current key.
+    //
+    // 我们也许可以使用我们在重启块中的当前位置.
+    // 如果我们确定我们想要的 key 在当前块中并且在当前 key 之后, 那么这是 true.
     assert(current_key_compare == 0 || Valid());
+    // left == restart_index_ 表示 target 在 当前正在使用的重启块 (current_所在重启块) 中
+    // current_key_compare < 0 表示 target > key_
+    // => 跳过 key_ 之前的匹配 (否则就不能跳过)
     bool skip_seek = left == restart_index_ && current_key_compare < 0;
     if (!skip_seek) {
       SeekToRestartPoint(left);

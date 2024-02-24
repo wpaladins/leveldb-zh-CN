@@ -56,7 +56,7 @@ class LEVELDB_EXPORT Comparator {
 
   // Advanced functions: these are used to reduce the space requirements
   // for internal data structures like index blocks.
-  // 高级函数：用于减少 内部数据结构 (如索引块) 的空间需求
+  // 高级函数: 用于减少 内部数据结构 (如索引块) 的空间需求
 
   // If *start < limit, changes *start to a short string in [start,limit).
   // Simple comparator implementations may return with *start unchanged,

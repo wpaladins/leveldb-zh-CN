@@ -51,6 +51,8 @@ class InternalKey;
 // Value types encoded as the last component of internal keys.
 // DO NOT CHANGE THESE ENUM VALUES: they are embedded in the on-disk
 // data structures.
+// Value types 会被编码为 internal keys 的最后一个组件
+// 不要修改 这些枚举值, 因为他们被嵌入到了磁盘的数据结构中
 enum ValueType { kTypeDeletion = 0x0, kTypeValue = 0x1 };
 // kValueTypeForSeek defines the ValueType that should be passed when
 // constructing a ParsedInternalKey object for seeking to a particular
@@ -66,6 +68,7 @@ typedef uint64_t SequenceNumber;
 // can be packed together into 64-bits.
 static const SequenceNumber kMaxSequenceNumber = ((0x1ull << 56) - 1);
 
+// 由 ParseInternalKey 解析 internal_key 生成
 struct ParsedInternalKey {
   Slice user_key;
   SequenceNumber sequence;
@@ -92,6 +95,7 @@ void AppendInternalKey(std::string* result, const ParsedInternalKey& key);
 bool ParseInternalKey(const Slice& internal_key, ParsedInternalKey* result);
 
 // Returns the user key portion of an internal key.
+// 返回 一个 内部键 的 用户键 部分
 inline Slice ExtractUserKey(const Slice& internal_key) {
   assert(internal_key.size() >= 8);
   return Slice(internal_key.data(), internal_key.size() - 8);
@@ -99,6 +103,8 @@ inline Slice ExtractUserKey(const Slice& internal_key) {
 
 // A comparator for internal keys that uses a specified comparator for
 // the user key portion and breaks ties by decreasing sequence number.
+// 内部键 的比较器
+// 它对 用户键 部分使用 指定的比较器, 并通过 减少序列号 来打破平局
 class InternalKeyComparator : public Comparator {
  private:
   const Comparator* user_comparator_;
@@ -172,11 +178,15 @@ inline bool ParseInternalKey(const Slice& internal_key,
                              ParsedInternalKey* result) {
   const size_t n = internal_key.size();
   if (n < 8) return false;
+  // num      为 internal_key 的 高 8 字节 (data() 返回值类型为 char*)
   uint64_t num = DecodeFixed64(internal_key.data() + n - 8);
+  // c        为 num 的 低 1 字节
   uint8_t c = num & 0xff;
+  // sequence 为 num 的 高 7 字节
   result->sequence = num >> 8;
   result->type = static_cast<ValueType>(c);
   result->user_key = Slice(internal_key.data(), n - 8);
+  // 返回值 表达了 c 的有效性
   return (c <= static_cast<uint8_t>(kTypeValue));
 }
 
@@ -193,6 +203,7 @@ class LookupKey {
   ~LookupKey();
 
   // Return a key suitable for lookup in a MemTable.
+  // memtable key 比 internal key 多了一个 key length 前缀
   Slice memtable_key() const { return Slice(start_, end_ - start_); }
 
   // Return an internal key (suitable for passing to an internal iterator)

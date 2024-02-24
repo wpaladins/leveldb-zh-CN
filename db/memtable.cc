@@ -104,11 +104,13 @@ bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) {
   Table::Iterator iter(&table_);
   iter.Seek(memkey.data());
   if (iter.Valid()) {
-    // entry format is:
+    // 这里的 key 包含了 userkey + tag
+    //
+    // entry format is:                               // address
     //    klength  varint32
-    //    userkey  char[klength]
-    //    tag      uint64
-    //    vlength  varint32
+    //    userkey  char[klength]                      <- key_ptr
+    //    tag      uint64                             <- key_ptr + key_length - 8
+    //    vlength  varint32                           <- key_ptr + key_length
     //    value    char[vlength]
     // Check that it belongs to same user key.  We do not check the
     // sequence number since the Seek() call above should have skipped

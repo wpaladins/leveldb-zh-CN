@@ -435,7 +435,7 @@ Status DBImpl::RecoverLogFile(uint64_t log_number, bool last_log,
                           Status::Corruption("log record too small"));
       continue;
     }
-    WriteBatchInternal::SetContents(&batch, record);
+    WriteBatchInternal::SetContents(&batch, record); // 这里的 数据拷贝 能避免吗
 
     if (mem == nullptr) {
       mem = new MemTable(internal_comparator_);

@@ -12,6 +12,7 @@
 
 namespace leveldb {
 
+// 将 seq 和 t 组合为一个 uint64
 static uint64_t PackSequenceAndType(uint64_t seq, ValueType t) {
   assert(seq <= kMaxSequenceNumber);
   assert(t <= kValueTypeForSeek);
@@ -49,8 +50,14 @@ int InternalKeyComparator::Compare(const Slice& akey, const Slice& bkey) const {
   //    increasing user key (according to user-supplied comparator)
   //    decreasing sequence number
   //    decreasing type (though sequence# should be enough to disambiguate)
+  // 排序规则:
+  //    先按照 用户键 (根据 用户提供的比较器) 升序 排序
+  //    其次按照 序列号 降序 排序
+  //    最后按照 类型 (尽管 序列号 应该足以消除歧义) 降序 排序
   int r = user_comparator_->Compare(ExtractUserKey(akey), ExtractUserKey(bkey));
   if (r == 0) {
+    // 将 类型 (低位 1B) 和 序列号 (高位 7B) 一同解析为 uint64
+    // 参考 PackSequenceAndType
     const uint64_t anum = DecodeFixed64(akey.data() + akey.size() - 8);
     const uint64_t bnum = DecodeFixed64(bkey.data() + bkey.size() - 8);
     if (anum > bnum) {

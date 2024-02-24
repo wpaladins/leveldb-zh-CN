@@ -81,10 +81,10 @@ FilterBlockReader::FilterBlockReader(const FilterPolicy* policy,
   if (n < 5) return;  // 1 byte for base_lg_ and 4 for start of offset array
   base_lg_ = contents[n - 1];
   uint32_t last_word = DecodeFixed32(contents.data() + n - 5);
-  if (last_word > n - 5) return;
+  if (last_word > n - 5) return; // 这里不用提示出错吗
   data_ = contents.data();
   offset_ = data_ + last_word;
-  num_ = (n - 5 - last_word) / 4;
+  num_ = (n - 5 - last_word) / 4; // 4 是过滤偏移 (filter offset, uint32_t) 的大小
 }
 
 bool FilterBlockReader::KeyMayMatch(uint64_t block_offset, const Slice& key) {

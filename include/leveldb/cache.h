@@ -93,8 +93,8 @@ class LEVELDB_EXPORT Cache {
   // REQUIRES: handle must not have been released yet.
   // REQUIRES: handle must have been returned by a method on *this.
   // 释放先前 Lookup() 返回的映射
-  // 要求：句柄必须尚未被释放
-  // 要求：句柄必须是之前由 *this 上的方法返回的
+  // 要求: 句柄必须尚未被释放
+  // 要求: 句柄必须是之前由 *this 上的方法返回的
   virtual void Release(Handle* handle) = 0;
 
   // Return the value encapsulated in a handle returned by a
@@ -102,8 +102,8 @@ class LEVELDB_EXPORT Cache {
   // REQUIRES: handle must not have been released yet.
   // REQUIRES: handle must have been returned by a method on *this.
   // 返回封装在由成功的 Lookup() 返回的句柄中的值
-  // 要求：句柄必须尚未被释放
-  // 要求：句柄必须是之前由 *this 上的方法返回的
+  // 要求: 句柄必须尚未被释放
+  // 要求: 句柄必须是之前由 *this 上的方法返回的
   virtual void* Value(Handle* handle) = 0;
 
   // If the cache contains entry for key, erase it.  Note that the

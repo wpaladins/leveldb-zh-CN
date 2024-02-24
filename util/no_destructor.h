@@ -28,7 +28,7 @@ class NoDestructor {
         "instance_storage_ does not meet the instance's alignment requirement");
     // placement new
     // 在 已分配好的 内存中 构造对象
-    // 这样创建的对象并不会调用 析构函数
+    // 这样创建的对象不会自动调用 析构函数
     new (&instance_storage_)
         InstanceType(std::forward<ConstructorArgTypes>(constructor_args)...);
   }
